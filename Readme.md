@@ -50,5 +50,4 @@ Both files connect to the same MongoDB database and work together by:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/yourrepository.git
-   cd yourrepository
+   git clone https://github.com/Kunal7069/DATA_GRAPH
