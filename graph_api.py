@@ -192,20 +192,12 @@ def process_graph_endpoint():
     adjacency_list = get_graph(graph_id)
     adjacency_list = copy.deepcopy(adjacency_list)
     for i in disabled_nodes:
-        is_root_node = all(edge["dst_node"] != i for edge in edge_list)
-        is_leaf_node = all(edge["src_node"] != i for edge in edge_list)
-        if is_root_node:
-            print(f"{i} is a root node")
-            edge_list = [edge for edge in edge_list if edge["src_node"] != i]
-            if i in adjacency_list:
-                adjacency_list.pop(i)
-        if is_leaf_node:
-            print(f"{i} is a leaf node")
-            edge_list = [edge for edge in edge_list if edge["dst_node"] != i]
-            for node, details in adjacency_list.items():
+        edge_list = [edge for edge in edge_list if edge["src_node"] != i]
+        edge_list = [edge for edge in edge_list if edge["dst_node"] != i]
+        for node, details in adjacency_list.items():
                 details["edges"] = [edge for edge in details["edges"] if edge["dst_node"] != i]
-            if i in adjacency_list:
-                adjacency_list.pop(i)
+        if i in adjacency_list:
+            adjacency_list.pop(i)
     key = next(iter(input_values.keys()))
     check_is_root_node = all(edge["dst_node"] != key for edge in edge_list)
     if check_is_root_node:
