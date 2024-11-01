@@ -185,12 +185,25 @@ def get_graph(graph_id):
 def process_graph_endpoint():
     data = request.get_json()
     graph_id = data.get("graph_id")
-    input_values = data.get("input_values", {})
-    disabled_nodes=data.get("disabled_nodes", [])
+    input_values = data.get("root_inputs", {})
+    disabled_nodes=data.get("disable_list", [])
+    data_overwrites=data.get("data_overwrites", {})
     edge_list=get_edges()
     edge_list = copy.deepcopy(edge_list)
     adjacency_list = get_graph(graph_id)
     adjacency_list = copy.deepcopy(adjacency_list)
+    
+    for node_key, new_data_in in data_overwrites.items():
+        if node_key in adjacency_list:
+            adjacency_list[node_key]["data_in"] = new_data_in
+    
+    for node, details in adjacency_list.items():
+        for edge in details.get("edges", []):
+            dst_node = edge.get("dst_node")
+            # Check if the `dst_node` is in `data_overwrites` and update `data_in` accordingly
+            if dst_node in data_overwrites:
+                edge["data_in"] = data_overwrites[dst_node]
+    
     for i in disabled_nodes:
         edge_list = [edge for edge in edge_list if edge["src_node"] != i]
         edge_list = [edge for edge in edge_list if edge["dst_node"] != i]
@@ -200,6 +213,7 @@ def process_graph_endpoint():
             adjacency_list.pop(i)
     key = next(iter(input_values.keys()))
     check_is_root_node = all(edge["dst_node"] != key for edge in edge_list)
+    
     if check_is_root_node:
         graph = Graph_1()
         
@@ -224,6 +238,7 @@ def process_graph_endpoint():
         return jsonify(graph_state), 200
     else:
         return jsonify({"Result": "IT IS NOT A ROOT NODE"}), 200
+    
 
 
 if __name__ == "__main__":
