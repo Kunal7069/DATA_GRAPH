@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,Blueprint
 from flask_mongoengine import MongoEngine
 from typing import Dict, List, Union, Optional
 from collections import defaultdict, deque
@@ -8,21 +8,9 @@ from copy import deepcopy
 from config import Config
 import copy
 
-# Initialize Flask app and load configuration
-app = Flask(__name__)
 
-app.config["MONGODB_SETTINGS"] = {
-    "host": Config.MONGO_URI
-}
-db = MongoEngine(app)
+graph_bp = Blueprint('graph', __name__)
 
-# Check the connection by pinging the database within the application context
-with app.app_context():
-    try:
-        db.connection.admin.command('ping')
-        print("Connected to MongoDB!")
-    except Exception as e:
-        print("Failed to connect to MongoDB:", e)
 # Type definitions
 DataType = Union[int, str, bool, list, dict]
 
@@ -181,7 +169,7 @@ def get_graph(graph_id):
 
     return (adjacency_list)
 
-@app.route('/process_graph', methods=['POST'])
+@graph_bp.route('/process_graph', methods=['POST'])
 def process_graph_endpoint():
     data = request.get_json()
     graph_id = data.get("graph_id")
@@ -242,4 +230,4 @@ def process_graph_endpoint():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    graph_bp.run(debug=True)
