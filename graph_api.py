@@ -64,11 +64,11 @@ class Graph_1:
         for dictionary in [node.data_in, node.data_out]:
             for key, type_str in node_data["data_in"].items():
                 if type_str == "int":
-                    dictionary[key] = 0
+                    dictionary[key] = 'Null'
                 elif type_str == "str":
                     dictionary[key] = ""
                 elif type_str == "bool":
-                    dictionary[key] = False
+                    dictionary[key] = 'Null'
                 elif type_str == "list":
                     dictionary[key] = []
                 elif type_str == "dict":
@@ -186,31 +186,52 @@ def process_graph_endpoint():
     data = request.get_json()
     graph_id = data.get("graph_id")
     input_values = data.get("input_values", {})
+    disabled_nodes=data.get("disabled_nodes", [])
     edge_list=get_edges()
     edge_list = copy.deepcopy(edge_list)
     adjacency_list = get_graph(graph_id)
     adjacency_list = copy.deepcopy(adjacency_list)
-    graph = Graph_1()
-    
-    for node_id, node_data in adjacency_list.items():
-        graph.add_node(str(node_id), node_data)
+    for i in disabled_nodes:
+        is_root_node = all(edge["dst_node"] != i for edge in edge_list)
+        is_leaf_node = all(edge["src_node"] != i for edge in edge_list)
+        if is_root_node:
+            print(f"{i} is a root node")
+            edge_list = [edge for edge in edge_list if edge["src_node"] != i]
+            if i in adjacency_list:
+                adjacency_list.pop(i)
+        if is_leaf_node:
+            print(f"{i} is a leaf node")
+            edge_list = [edge for edge in edge_list if edge["dst_node"] != i]
+            for node, details in adjacency_list.items():
+                details["edges"] = [edge for edge in details["edges"] if edge["dst_node"] != i]
+            if i in adjacency_list:
+                adjacency_list.pop(i)
+    key = next(iter(input_values.keys()))
+    check_is_root_node = all(edge["dst_node"] != key for edge in edge_list)
+    if check_is_root_node:
+        graph = Graph_1()
         
-    # Add edges from edge list
-    for edge_data in edge_list:
-        graph.add_edge(edge_data)
+        for node_id, node_data in adjacency_list.items():
+            graph.add_node(str(node_id), node_data)
+            
+        # Add edges from edge list
+        for edge_data in edge_list:
+            graph.add_edge(edge_data)
 
-    # Set initial input values for specified nodes
-    for node_id, values in input_values.items():
-        if node_id in graph.nodes:
-            for key, value in values.items():
-                graph.nodes[node_id].data_in[key] = value
+        # Set initial input values for specified nodes
+        for node_id, values in input_values.items():
+            if node_id in graph.nodes:
+                for key, value in values.items():
+                    graph.nodes[node_id].data_in[key] = value
 
-    # Process graph
-    graph.process_graph()
-    
-    # Return final graph state
-    graph_state = graph.get_graph_state()
-    return jsonify(graph_state), 200
+        # Process graph
+        graph.process_graph()
+        
+        # Return final graph state
+        graph_state = graph.get_graph_state()
+        return jsonify(graph_state), 200
+    else:
+        return jsonify({"Result": "IT IS NOT A ROOT NODE"}), 200
 
 
 if __name__ == "__main__":

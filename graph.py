@@ -247,24 +247,7 @@ def run_test_case():
 }
 
     edge_list = [
-        {
-            "dst_node": "node2",
-            "edge_id": "edge1",
-            "src_node": "node1",
-            "src_to_dst_data_keys": {
-                "input_key2": "input_key4",
-                "input_key3": "input_key5"
-            }
-        },
-        {
-            "dst_node": "node3",
-            "edge_id": "edge2",
-            "src_node": "node1",
-            "src_to_dst_data_keys": {
-                "input_key2": "input_key7",
-                "input_key3": "input_key6"
-            }
-        },
+        
         {
             "dst_node": "node5",
             "edge_id": "edge3",
@@ -303,9 +286,9 @@ def run_test_case():
         graph.add_edge(edge_data)
     
     # Set some initial values for node1
-    graph.nodes["node1"].data_in["input_key1"] = 2
-    graph.nodes["node1"].data_in["input_key2"] = 3
-    graph.nodes["node1"].data_in["input_key3"] = 4
+    graph.nodes["node2"].data_in["input_key4"] = 2
+    graph.nodes["node2"].data_in["input_key5"] = 3
+    # graph.nodes["node1"].data_in["input_key3"] = 4
     
     
     # Print initial state
