@@ -53,7 +53,7 @@ Both files connect to the same MongoDB database and work together by:
    git clone https://github.com/Kunal7069/DATA_GRAPH
 2. **Install the dependencies**:
    ```bash
-   pip install reqquirements.txt
+   pip install requirements.txt
 3. **Edit the .env file**:
    ```bash
    Paste your mongodb cloud url in MONGO_URI in .env file
