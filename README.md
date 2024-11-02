@@ -51,3 +51,12 @@ Both files connect to the same MongoDB database and work together by:
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/Kunal7069/DATA_GRAPH
+2. **Install the dependencies**:
+   ```bash
+   pip install reqquirements.txt
+3. **Edit the .env file**:
+   ```bash
+   Paste your mongodb cloud url in MONGO_URI in .env file
+3. **Run the project**:
+   ```bash
+   Python app.py
