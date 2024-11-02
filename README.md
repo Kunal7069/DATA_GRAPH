@@ -59,4 +59,4 @@ Both files connect to the same MongoDB database and work together by:
    Paste your mongodb cloud url in MONGO_URI in .env file
 3. **Run the project**:
    ```bash
-   Python app.py
+   python app.py
