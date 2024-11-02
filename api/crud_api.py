@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from models import Node, Edge
+from models import Node, Edge,Graph
 
 crud_bp = Blueprint('crud', __name__)
 

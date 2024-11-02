@@ -31,6 +31,7 @@ class Node_1:
         self.level = -1
         self.visited = False
         self.edges_out: List[Edge_1] = []
+        self.incoming_nodes: Dict[str, Node] = {}
 
 class Graph_1:
     def __init__(self):
@@ -62,6 +63,66 @@ class Graph_1:
                 elif type_str == "dict":
                     dictionary[key] = {}
     
+    def detect_cycle(self) -> bool:
+        """Detect if there's a cycle in the graph using DFS"""
+        visited = set()
+        rec_stack = set()
+
+        def dfs_cycle(node_id: str) -> bool:
+            visited.add(node_id)
+            rec_stack.add(node_id)
+
+            node = self.nodes[node_id]
+            for edge in node.edges_out:
+                neighbor = edge.dst_node
+                if neighbor not in visited:
+                    if dfs_cycle(neighbor):
+                        return True
+                elif neighbor in rec_stack:
+                    return True
+
+            rec_stack.remove(node_id)
+            return False
+
+        for node_id in self.nodes:
+            if node_id not in visited:
+                if dfs_cycle(node_id):
+                    return True
+        return False
+    
+    def check_connectivity(self) -> bool:
+        """Check if graph is connected using DFS"""
+        if not self.nodes:
+            return True
+
+        # Create an undirected version of the graph for connectivity check
+        adjacency = defaultdict(set)
+        for edge in self.edges:
+            adjacency[edge.src_node].add(edge.dst_node)
+            adjacency[edge.dst_node].add(edge.src_node)
+
+        # Start DFS from any node
+        start_node = next(iter(self.nodes))
+        visited = set()
+
+        def dfs_connect(node_id: str):
+            visited.add(node_id)
+            for neighbor in adjacency[node_id]:
+                if neighbor not in visited:
+                    dfs_connect(neighbor)
+
+        dfs_connect(start_node)
+
+        # Check if all nodes were visited
+        return len(visited) == len(self.nodes)
+    
+    def get_priority_source(self, node: Node_1) -> List[str]:
+        """Get source nodes in priority order (higher level first, then lexicographical)"""
+        source_nodes = list(node.incoming_nodes.keys())
+        sorted_nodes = sorted(source_nodes, key=lambda x: (-node.incoming_nodes[x].level, x))
+        #print(f"\nPriority sources for {node.node_id}: {sorted_nodes}")  # Debug print
+        return sorted_nodes
+    
     def add_edge(self, edge_data: dict) -> None:
         edge = Edge_1(
             edge_id=edge_data["edge_id"],
@@ -73,17 +134,25 @@ class Graph_1:
         self.nodes[edge.src_node].edges_out.append(edge)
     
     def process_graph(self) -> None:
+       
+        """Process the graph using modified Kahn's algorithm with priority rules"""
+
         in_degree = defaultdict(int)
         for edge in self.edges:
             in_degree[edge.dst_node] += 1
         
         queue = deque()
+        level_nodes = defaultdict(list)
+        
         for node_id in self.nodes:
             if in_degree[node_id] == 0:
                 queue.append(node_id)
                 self.nodes[node_id].level = 0
+                level_nodes[0].append(node_id)
         
         current_level = 0
+        self.topological_order = []
+        
         while queue:
             level_size = len(queue)
             for _ in range(level_size):
@@ -94,18 +163,36 @@ class Graph_1:
                     continue
                 
                 current_node.visited = True
+                self.topological_order.append(current_node_id)
                 current_node.data_out = deepcopy(current_node.data_in)
                 
                 for edge in current_node.edges_out:
                     dst_node = self.nodes[edge.dst_node]
-                    for src_key, dst_key in edge.src_to_dst_data_keys.items():
-                        if not dst_node.visited:
-                            dst_node.data_in[dst_key] = deepcopy(current_node.data_out[src_key])
+                    priority_sources = self.get_priority_source(dst_node)
+                    
+                    is_highest_priority = True
+                    for higher_priority_src in priority_sources:
+                        if higher_priority_src == current_node_id:
+                            break
+                        if self.nodes[higher_priority_src].visited:
+                            is_highest_priority = False
+                            break
+                    if is_highest_priority:
+                        for src_key, dst_key in edge.src_to_dst_data_keys.items():
+                            if not dst_node.visited:
+                                dst_node.data_in[dst_key] = deepcopy(current_node.data_out[src_key])
                     in_degree[edge.dst_node] -= 1
                     if in_degree[edge.dst_node] == 0:
                         queue.append(edge.dst_node)
                         dst_node.level = current_level + 1
+                        level_nodes[current_level + 1].append(edge.dst_node)
             current_level += 1
+        print("\nTopological Order:")
+        for level in range(max(level_nodes.keys()) + 1):
+            # Sort nodes of this level lexicographically
+            nodes_at_level = sorted(level_nodes[level])
+            if nodes_at_level:
+                print(f"Level {level}: {' '.join(nodes_at_level)}")
 
     def get_graph_state(self) -> Dict:
         state = {}
@@ -211,7 +298,16 @@ def process_graph_endpoint():
         # Add edges from edge list
         for edge_data in edge_list:
             graph.add_edge(edge_data)
-
+        
+        connectivity=graph.check_connectivity()
+        print("connectivity",connectivity)
+        detect_cycle=graph.detect_cycle()
+        print("detect_cycle",detect_cycle)
+        if detect_cycle:
+            return jsonify({"Result": "CYCLE DETECTED"}), 200
+        if connectivity== False:
+            return jsonify({"Result": "ISLANDS DETECTED"}), 200   
+         
         # Set initial input values for specified nodes
         for node_id, values in input_values.items():
             if node_id in graph.nodes:
@@ -220,6 +316,7 @@ def process_graph_endpoint():
 
         # Process graph
         graph.process_graph()
+        
         
         # Return final graph state
         graph_state = graph.get_graph_state()

@@ -72,6 +72,18 @@ class Graph:
         self.nodes[edge.src_node].edges_out.append(edge)
     
     def process_graph(self) -> None:
+        
+        if self.detect_cycle():
+            print("\nCycle detected")
+            return
+
+        # Check connectivity
+        if not self.check_connectivity():
+            print("\nGraph not connected")
+        else:
+            print("\nGraph connected")
+        
+        
         """Process the graph using Kahn's algorithm"""
         # Calculate in-degrees
         in_degree = defaultdict(int)
@@ -80,12 +92,15 @@ class Graph:
         
         # Initialize queue with roots (nodes with in-degree 0)
         queue = deque()
+        level_nodes = defaultdict(list)
         for node_id in self.nodes:
             if in_degree[node_id] == 0:
                 queue.append(node_id)
                 self.nodes[node_id].level = 0
+                level_nodes[0].append(node_id)
         
         current_level = 0
+        self.topological_order = []
         
         while queue:
             level_size = len(queue)
@@ -116,8 +131,15 @@ class Graph:
                     if in_degree[edge.dst_node] == 0:
                         queue.append(edge.dst_node)
                         dst_node.level = current_level + 1
+                        level_nodes[current_level + 1].append(edge.dst_node)
             
             current_level += 1
+        
+        for level in range(max(level_nodes.keys()) + 1):
+            # Sort nodes of this level lexicographically
+            nodes_at_level = sorted(level_nodes[level])
+            if nodes_at_level:
+                print(f"Level {level}: {' '.join(nodes_at_level)}")
 
     def print_graph_state(self, title: str = "") -> None:
         """Print the current state of the graph"""
