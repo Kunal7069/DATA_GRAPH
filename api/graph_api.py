@@ -11,7 +11,7 @@ import copy
 
 graph_bp = Blueprint('graph', __name__)
 
-@graph_bp.route('/process_graph', methods=['POST'])
+@graph_bp.route('/graph_run_config', methods=['POST'])
 def process_graph_endpoint():
     data = request.get_json()
     graph_id = data.get("graph_id")
